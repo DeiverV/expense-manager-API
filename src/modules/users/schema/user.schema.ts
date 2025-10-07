@@ -5,7 +5,7 @@ export class User {
   @Prop()
   username: string;
 
-  @Prop()
+  @Prop({ required: false })
   age: number;
 
   @Prop()
