@@ -16,8 +16,8 @@ export class UsersService {
     });
     if (existingUser) throw new ConflictException('User already exists');
 
-    user.password = await crypt.hashPassword(user.password);
-    const createdUser = new this.userModel(user);
+    const hashedPassword = await crypt.hashPassword(user.password);
+    const createdUser = new this.userModel({ ...user, password: hashedPassword });
     return await createdUser.save();
   }
 
