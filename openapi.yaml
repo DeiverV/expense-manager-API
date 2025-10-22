@@ -1,0 +1,277 @@
+openapi: 3.0.0
+info:
+  title: Gestor de Gastos API
+  description: API REST para la gestión de gastos personales desarrollada con NestJS, MongoDB y TypeScript.
+  version: 1.0.0
+  contact:
+    name: Deiber Verano
+    email: deiberveranodev@gmail.com
+servers:
+  - url: http://localhost:3000
+    description: Servidor local de desarroll
+
+tags:
+  - name: Auth
+    description: Endpoints de autenticación
+  - name: Users
+    description: Gestión de usuarios
+  - name: Expenses
+    description: Gestión de gastos personales
+
+paths:
+  /auth:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      description: Inicia sesión y devuelve un token JWT válido.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: usuario123
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Inicio de sesión exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        '401':
+          description: Credenciales inválidas
+
+  /users:
+    post:
+      tags: [Users]
+      summary: Registrar un nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserDto'
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+        '400':
+          description: Datos inválidos
+
+  /users/loggedUser:
+    get:
+      tags: [Users]
+      summary: Obtener usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuario autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /expenses:
+    get:
+      tags: [Expenses]
+      summary: Listar gastos del usuario autenticado
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de gastos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Expense'
+    post:
+      tags: [Expenses]
+      summary: Crear nuevo gasto
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExpenseDto'
+      responses:
+        '201':
+          description: Gasto creado correctamente
+        '400':
+          description: Error en los datos enviados
+
+  /expenses/{id}:
+    put:
+      tags: [Expenses]
+      summary: Actualizar gasto por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del gasto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateExpenseDto'
+      responses:
+        '200':
+          description: Gasto actualizado
+        '404':
+          description: Gasto no encontrado
+    delete:
+      tags: [Expenses]
+      summary: Eliminar gasto por ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID del gasto
+      responses:
+        '204':
+          description: Eliminado correctamente
+        '404':
+          description: Gasto no encontrado
+
+  /expenses/report:
+    get:
+      tags: [Expenses]
+      summary: Generar reporte de gastos por rango de fechas
+      description: Devuelve un resumen agrupado por categorías con totales y promedios.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Fecha de inicio del rango
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Fecha de fin del rango
+      responses:
+        '200':
+          description: Reporte generado
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    totalAmount:
+                      type: number
+                      example: 250.75
+                    totalExpenses:
+                      type: integer
+                      example: 8
+                    avgExpense:
+                      type: number
+                      example: 31.34
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateUserDto:
+      type: object
+      properties:
+        username:
+          type: string
+          example: usuario123
+        age:
+          type: number
+          example: 25
+        email:
+          type: string
+          example: usuario@ejemplo.com
+        password:
+          type: string
+          example: password123
+      required: [username, email, password]
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 66ef9d1243215b16f1c2c901
+        username:
+          type: string
+        age:
+          type: number
+        email:
+          type: string
+
+    CreateExpenseDto:
+      type: object
+      properties:
+        category:
+          type: string
+          example: Alimentación
+        description:
+          type: string
+          example: Cena en restaurante
+        amount:
+          type: number
+          example: 45.5
+        date:
+          type: string
+          format: date
+          example: '2024-01-15'
+      required: [category, amount]
+
+    UpdateExpenseDto:
+      allOf:
+        - $ref: '#/components/schemas/CreateExpenseDto'
+
+    Expense:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 66ef9d1243215b16f1c2c999
+        user:
+          type: string
+          example: 66ef9d1243215b16f1c2c999
+        category:
+          type: string
+        description:
+          type: string
+        amount:
+          type: number
+        date:
+          type: string
+          format: date
