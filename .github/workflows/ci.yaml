@@ -1,0 +1,45 @@
+name: Pipeline de CI/CD para Ingeniería Web
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: 🧪 Construir y Probar
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar Repositorio
+        uses: actions/checkout@v3
+
+      - name: Configurar Node.js v18 y pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+
+      - name: Instalar Dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Ejecutar Pruebas
+        run: pnpm test
+
+  deploy:
+    name: 🚀 Desplegar (Simulación)
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Simular Despliegue
+        run: |
+          echo "✅ Pruebas pasadas."
+          echo "Iniciando despliegue a un servidor..."
+          echo "..."
+          echo "🎉 ¡Despliegue simulado con éxito!"
